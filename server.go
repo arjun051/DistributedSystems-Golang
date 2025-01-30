@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/arjun051/distributedfilesystemgo/p2p"
+	"github.com/arjun051/DistributedSystems-Golang/p2p"
 )
 
 type FileServerOpts struct {
