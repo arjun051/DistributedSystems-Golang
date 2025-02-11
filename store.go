@@ -138,6 +138,7 @@ func (s *Store) writeStream(id string, key string, r io.Reader) (int64, error) {
 	return io.Copy(f, r)
 }
 
+
 func (s *Store) Read(id string, key string) (int64, io.Reader, error) {
 	return s.readStream(id, key)
 }
@@ -150,7 +151,7 @@ func (s *Store) readStream(id string, key string) (int64, io.ReadCloser, error) 
 	if err != nil {
 		return 0, nil, err
 	}
-
+	
 	fi, err := file.Stat()
 	if err != nil {
 		return 0, nil, err

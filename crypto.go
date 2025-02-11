@@ -87,3 +87,7 @@ func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 	stream := cipher.NewCTR(block, iv)
 	return copyStream(stream, block.BlockSize(), src, dst)
 }
+
+// What i have to do -> build, customise and understand this project in 24 hrs
+// Build a custom project for myself -> finish the mumbai project itself build on it, 
+// a portfolio website for myself. finish 10 dsa problems daily grind hard on dsa so i dont have time for youtube
