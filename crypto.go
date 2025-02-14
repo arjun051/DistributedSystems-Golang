@@ -3,52 +3,57 @@ package main
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"log"
+
+	"golang.org/x/crypto/chacha20poly1305"
 )
 
 func generateID() string {
 	buf := make([]byte, 32)
-	io.ReadFull(rand.Reader, buf)
+	if _, err := io.ReadFull(rand.Reader, buf); err != nil {
+		panic(err) // Handle this error appropriately in your application
+	}
 	return hex.EncodeToString(buf)
 }
 
 func hashKey(key string) string {
-	hash := md5.Sum([]byte(key))
+	hash := sha256.Sum256([]byte(key))
 	return hex.EncodeToString(hash[:])
 }
 
 func newEncryptionKey() []byte {
-	keyBuf := make([]byte, 32)
-	io.ReadFull(rand.Reader, keyBuf)
-	return keyBuf
+	key := make([]byte, chacha20poly1305.KeySize)
+	if _, err := io.ReadFull(rand.Reader, key); err != nil {
+		panic(err) // Handle this error appropriately in your application
+	}
+	return key
 }
 
-func copyStream(stream cipher.Stream, blockSize int, src io.Reader, dst io.Writer) (int, error) {
-	var (
-		buf = make([]byte, 32*1024)
-		nw  = blockSize
-	)
+func copyStream(stream cipher.Stream, src io.Reader, dst io.Writer) (int64, error) {
+	buf := make([]byte, 32*1024)
+	var written int64
 	for {
 		n, err := src.Read(buf)
 		if n > 0 {
-			stream.XORKeyStream(buf, buf[:n])
-			nn, err := dst.Write(buf[:n])
+			stream.XORKeyStream(buf[:n], buf[:n])
+			nw, err := dst.Write(buf[:n])
+			written += int64(nw)
 			if err != nil {
-				return 0, err
+				return written, err
 			}
-			nw += nn
 		}
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return 0, err
+			return written, err
 		}
 	}
-	return nw, nil
+	return written, nil
 }
 
 func copyDecrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
@@ -57,15 +62,14 @@ func copyDecrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 		return 0, err
 	}
 
-	// Read the IV from the given io.Reader which, in our case should be the
-	// the block.BlockSize() bytes we read.
 	iv := make([]byte, block.BlockSize())
 	if _, err := src.Read(iv); err != nil {
 		return 0, err
 	}
 
 	stream := cipher.NewCTR(block, iv)
-	return copyStream(stream, block.BlockSize(), src, dst)
+	written, err := copyStream(stream, src, dst)
+	return int(written), err
 }
 
 func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
@@ -74,20 +78,47 @@ func copyEncrypt(key []byte, src io.Reader, dst io.Writer) (int, error) {
 		return 0, err
 	}
 
-	iv := make([]byte, block.BlockSize()) // 16 bytes
+	iv := make([]byte, block.BlockSize())
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return 0, err
 	}
 
-	// prepend the IV to the file.
 	if _, err := dst.Write(iv); err != nil {
 		return 0, err
 	}
 
 	stream := cipher.NewCTR(block, iv)
-	return copyStream(stream, block.BlockSize(), src, dst)
+	written, err := copyStream(stream, src, dst)
+	return int(written) + len(iv), err
 }
 
-// What i have to do -> build, customise and understand this project in 24 hrs
-// Build a custom project for myself -> finish the mumbai project itself build on it, 
-// a portfolio website for myself. finish 10 dsa problems daily grind hard on dsa so i dont have time for youtube
+// New function for small data encryption using XChaCha20-Poly1305
+func encryptData(key []byte, plaintext []byte) ([]byte, error) {
+	aead, err := chacha20poly1305.NewX(key)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Hye............................................")
+
+	nonce := make([]byte, aead.NonceSize())
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, err
+	}
+
+	return aead.Seal(nonce, nonce, plaintext, nil), nil
+}
+
+// New function for small data decryption using XChaCha20-Poly1305
+func decryptData(key []byte, ciphertext []byte) ([]byte, error) {
+	aead, err := chacha20poly1305.NewX(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ciphertext) < aead.NonceSize() {
+		return nil, io.ErrUnexpectedEOF
+	}
+
+	nonce, ciphertext := ciphertext[:aead.NonceSize()], ciphertext[aead.NonceSize():]
+	return aead.Open(nil, nonce, ciphertext, nil)
+}
