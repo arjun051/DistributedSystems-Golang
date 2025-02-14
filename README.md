@@ -5,24 +5,12 @@ A decentralized peer-to-peer (P2P) file storage system implemented in **Go**. Th
 ---
 
 ## 📌 Features
-- ✅ **Decentralized Storage**: Store and retrieve files across multiple nodes.
-- 🔗 **P2P Communication**: Nodes connect to each other using TCP.
+- ✅ **Custom P2P Library**: Built with a fully custom peer-to-peer networking library.
+- 🔗 **Decentralized Storage**: Store and retrieve files across multiple nodes.
 - 🔄 **File Replication**: If a node doesn't have a file, it fetches from the network.
+- 🔒 **SHA-256 Encryption**: Ensures secure file storage and retrieval.
 - ⚡ **Auto-Reconnection**: Nodes attempt to reconnect to peers in case of failure.
-- 🔒 **Secure Storage**: Files are stored using Content-Addressable Storage (CAS).
-
----
-
-## 📁 Project Structure
-
-```
-📦 project-root
-├── 📂 p2p                # Peer-to-peer networking logic
-├── 📂 storage            # File storage and retrieval logic
-├── 📜 main.go            # Entry point of the program
-├── 📜 README.md          # Project documentation
-└── 📜 go.mod             # Go module dependencies
-```
+- 🔍 **Content-Addressable Storage (CAS)**: Files are stored and retrieved using hash-based addressing.
 
 ---
 
@@ -30,8 +18,7 @@ A decentralized peer-to-peer (P2P) file storage system implemented in **Go**. Th
 
 ### 1️⃣ Clone the Repository
 ```sh
-git clone https://github.com/arjun051/foreverstore.git
-cd foreverstore
+https://github.com/arjun051/DistributedSystems-Golang.git
 ```
 
 ### 2️⃣ Install Dependencies
@@ -42,7 +29,16 @@ go mod tidy
 ### 3️⃣ Run the File Servers
 To start the peer nodes:
 ```sh
-go run main.go
+make run
+```
+
+### 4️⃣ Run Tests
+```sh
+make test
+```
+Or manually run:
+```sh
+go test ./...
 ```
 
 ---
@@ -55,12 +51,6 @@ In **`main.go`**, nodes are initialized with unique ports:
 s1 := makeServer(":3000")
 s2 := makeServer(":4000")
 s3 := makeServer(":5000", ":3000", ":4000")
-```
-To run multiple nodes, start them sequentially:
-```sh
-go run main.go # Starts server on :3000
-go run main.go # Starts server on :4000
-go run main.go # Starts server on :5000
 ```
 
 ### Store a File
@@ -103,9 +93,16 @@ This project is open-source and available under the [MIT License](LICENSE).
 ---
 
 ## 💡 Future Improvements
-- 🌍 Implement **DHT (Distributed Hash Table)** for file lookup.
-- 📡 Add **gRPC** support for faster communication.
-- 🛡 Introduce **encryption** for secure file storage.
+- 🧩 **Sharding**: Implementing a sharding mechanism for better file distribution.
+- 🌍 **Automatic Peer Discovery**: Nodes will automatically detect and connect to new peers.
+- 💻 **Web-Based UI**: A user-friendly interface to manage file uploads and retrievals.
+- 📡 **gRPC Support**: Faster and more efficient network communication.
+- 🛡 **End-to-End Encryption**: Additional security for file storage.
+
+---
+
+### 🙏 Special Thanks
+Huge thanks to **Anthony GG** for his invaluable teachings and guidance in building this project!
 
 ---
 
